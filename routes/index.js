@@ -25,4 +25,21 @@ router.get("/stats", (req, res, next) => {
 		});
 });
 
+// Endpoint for reporting
+router.post("/report", (req, res) => {
+	const pageUrl = req.body.url;
+	const domain = getDomain(pageUrl);
+
+	// Check if domain already exists
+	Domain.findByIdAndUpdate(domain, { $inc: { reports: 1 } })
+		.then((doc) => {
+			// Updated, return new stats
+			res.status(201).send("Updated successfully, new count: " + doc.reports);
+		})
+		.catch((err) => {
+			console.log("Couldn't report on a domain: " + err);
+			res.status(500).json({ err: err });
+		});
+});
+
 module.exports = router;
