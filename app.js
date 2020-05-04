@@ -1,12 +1,28 @@
+require("dotenv").config();
+
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+var mongoose = require("mongoose");
 
 var indexRouter = require("./routes/index");
 
 var app = express();
+
+// DB Connection
+mongoose
+	.connect(process.env.MONGO_CONNECT_URI, {
+		useUnifiedTopology: true,
+		useNewUrlParser: true,
+	})
+	.then((val) => {
+		console.log("Connected to Laniakea");
+	})
+	.catch((err) => {
+		console.log("Couldn't connect to Laniakea: " + err);
+	});
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
