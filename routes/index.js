@@ -7,7 +7,7 @@ const router = express.Router();
 const getDomain = (pageUrl) => url.parse(pageUrl).hostname;
 
 // Endpoint for getting domain stats
-router.get("/stats", (req, res, next) => {
+router.post("/stats", (req, res, next) => {
 	const pageUrl = req.body.url;
 	const domain = getDomain(pageUrl);
 	let response = {};
