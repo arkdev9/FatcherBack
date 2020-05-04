@@ -7,7 +7,7 @@ const router = express.Router();
 const getDomain = (pageUrl) => url.parse(pageUrl).hostname;
 
 // Endpoint for getting domain stats
-router.post("/stats", (req, res, next) => {
+router.post("/stats", (req, res) => {
 	const pageUrl = req.body.url;
 	const domain = getDomain(pageUrl);
 	let response = {};
@@ -21,7 +21,7 @@ router.post("/stats", (req, res, next) => {
 		.catch((err) => {
 			// Failed to get the document, probably the domain doesn't exist on our db
 			console.log("Failed to serve a domain: " + domain + ", because: " + err);
-			res.status(400).json({ err: err });
+			res.status(400).send(err);
 		});
 });
 
@@ -29,6 +29,7 @@ router.post("/stats", (req, res, next) => {
 router.post("/report", (req, res) => {
 	const pageUrl = req.body.url;
 	const domain = getDomain(pageUrl);
+	let response = {};
 
 	// Check if domain already exists
 	Domain.findByIdAndUpdate(domain, { $inc: { reports: 1 } })
@@ -38,21 +39,23 @@ router.post("/report", (req, res) => {
 				Domain.create({ _id: domain })
 					.then((doc) => {
 						if (!doc) throw { message: "Couldn't create a Domain report" };
-						res
-							.status(201)
-							.json({ messgae: "Created a domain report for this domain" });
+						response.domainReports = 1;
+						response.message = "Created a domain report for this domain";
+						res.status(201).json(response);
 					})
 					.catch((err) => {
-						res.status(500).json({ err: err });
+						res.status(500).send(err);
 					});
 			} else {
 				// Updated, return new stats
-				res.status(200).send("Updated successfully, new count: " + doc.reports);
+				response.domainReports = doc.reports;
+				response.message = "Updated the document";
+				res.status(200).json(response);
 			}
 		})
 		.catch((err) => {
 			console.log("Couldn't report on a domain: " + err);
-			res.status(500).json({ err: err });
+			res.status(500).send(err);
 		});
 });
 
