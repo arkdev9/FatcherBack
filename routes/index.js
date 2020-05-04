@@ -33,8 +33,22 @@ router.post("/report", (req, res) => {
 	// Check if domain already exists
 	Domain.findByIdAndUpdate(domain, { $inc: { reports: 1 } })
 		.then((doc) => {
-			// Updated, return new stats
-			res.status(201).send("Updated successfully, new count: " + doc.reports);
+			if (!doc) {
+				// Doc doesn't exist, create one for this domain
+				Domain.create({ _id: domain })
+					.then((doc) => {
+						if (!doc) throw { message: "Couldn't create a Domain report" };
+						res
+							.status(201)
+							.json({ messgae: "Created a domain report for this domain" });
+					})
+					.catch((err) => {
+						res.status(500).json({ err: err });
+					});
+			} else {
+				// Updated, return new stats
+				res.status(200).send("Updated successfully, new count: " + doc.reports);
+			}
 		})
 		.catch((err) => {
 			console.log("Couldn't report on a domain: " + err);
