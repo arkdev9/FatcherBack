@@ -14,14 +14,29 @@ router.post("/stats", (req, res) => {
 
 	Domain.findById(domain)
 		.then((doc) => {
-			// We have the doc, return the number of reports on domain
-			response.domainReports = doc.reports;
-			res.status(200).json(response);
+			if (!doc) {
+				// Create doc
+				Domain.create({ _id: domain })
+					.then((doc) => {
+						response.domainReports = doc.reports;
+						response.message = "Created a document for this domain";
+						res.status(201).json(response);
+					})
+					.catch((err) => {
+						response.message = "Couldn't create a domain for this new domain";
+						response.err = err;
+						res.status(500).json(response);
+					});
+			} else {
+				// We have the doc, return the number of reports on domain
+				response.domainReports = doc.reports;
+				res.status(200).json(response);
+			}
 		})
 		.catch((err) => {
 			// Failed to get the document, probably the domain doesn't exist on our db
 			console.log("Failed to serve a domain: " + domain + ", because: " + err);
-			res.status(400).send(err);
+			res.status(500).send(err);
 		});
 });
 
