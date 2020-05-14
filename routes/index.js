@@ -15,7 +15,7 @@ router.post("/stats", (req, res) => {
 				// Domain doesn't exist
 				res.status(200).json({
 					domainReports: 0,
-					pathReports: 0,
+					pathReports: [{ path: path, reports: 1 }],
 					message: "No reports on this domain",
 				});
 			} else {
