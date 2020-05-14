@@ -1,40 +1,33 @@
 const url = require("url");
 const express = require("express");
-const Report = require("../models/Report");
 const Domain = require("../models/Domain");
 const router = express.Router();
 
-const getDomain = (pageUrl) => url.parse(pageUrl).hostname;
-
 // Endpoint for getting domain stats
 router.post("/stats", (req, res) => {
-	const pageUrl = req.body.url;
-	const domain = getDomain(pageUrl);
-	let response = {};
+	const reqUrl = url.parse(req.body.url);
+	const domain = reqUrl.hostname;
 
 	Domain.findById(domain)
 		.then((doc) => {
 			if (!doc) {
-				// Create doc
-				Domain.create({ _id: domain })
-					.then((doc) => {
-						response.domainReports = doc.reports;
-						response.message = "Created a document for this domain";
-						res.status(201).json(response);
-					})
-					.catch((err) => {
-						response.message = "Couldn't create a domain for this new domain";
-						response.err = err;
-						res.status(500).json(response);
-					});
+				// Domain doesn't exist
+				res.status(200).json({
+					reports: 0,
+					pathReports: 0,
+					message: "No reports on this domain",
+				});
 			} else {
 				// We have the doc, return the number of reports on domain
-				response.domainReports = doc.reports;
-				res.status(200).json(response);
+				res.status(200).json({
+					reports: doc.reports,
+					pathReports: doc.pathReports,
+					message: "Domain stats",
+				});
 			}
 		})
 		.catch((err) => {
-			// Failed to get the document, probably the domain doesn't exist on our db
+			// Failed to get the document
 			console.log("Failed to serve a domain: " + domain + ", because: " + err);
 			res.status(500).send(err);
 		});
@@ -42,35 +35,55 @@ router.post("/stats", (req, res) => {
 
 // Endpoint for reporting
 router.post("/report", (req, res) => {
-	const pageUrl = req.body.url;
-	const domain = getDomain(pageUrl);
-	let response = {};
+	const reqUrl = url.parse(req.body.url);
+	const domain = reqUrl.hostname;
+	const path = reqUrl.pathname;
 
 	// Check if domain already exists
-	Domain.findByIdAndUpdate(domain, { $inc: { reports: 1 } })
+	Domain.findById(domain)
 		.then((doc) => {
 			if (!doc) {
 				// Doc doesn't exist, create one for this domain
-				Domain.create({ _id: domain })
-					.then((doc) => {
-						if (!doc) throw { message: "Couldn't create a Domain report" };
-						response.domainReports = 1;
-						response.message = "Created a domain report for this domain";
-						res.status(201).json(response);
-					})
-					.catch((err) => {
-						res.status(500).send(err);
-					});
+				let newDoc = new Domain({
+					_id: domain,
+					reports: 1,
+					pathReports: [
+						{
+							path: path,
+							reports: 1,
+						},
+					],
+				});
+
+				newDoc.save((err, createdDoc) => {
+					if (err) res.status(500).json({ err });
+					else {
+						res.status(201).json({
+							domainReports: createdDoc.reports,
+							pathReports: createdDoc.pathReports.length,
+							message: "Created a document for domain",
+						});
+					}
+				});
 			} else {
-				// Updated, return new stats
-				response.domainReports = doc.reports;
-				response.message = "Updated the document";
-				res.status(200).json(response);
+				// Found the document, increment domain reports
+				doc.reports += 1;
+				doc.incrementPathReport(path);
+				doc.save((err, updatedDoc) => {
+					if (err) res.status(500).json({ err });
+					else {
+						res.status(200).json({
+							domainReports: updatedDoc.reports,
+							pathReports: updatedDoc.getPathReport(path).reports,
+							message: "Updated domain report",
+						});
+					}
+				});
 			}
 		})
 		.catch((err) => {
 			console.log("Couldn't report on a domain: " + err);
-			res.status(500).send(err);
+			res.status(500).json({ err });
 		});
 });
 
