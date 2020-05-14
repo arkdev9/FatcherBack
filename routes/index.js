@@ -13,15 +13,15 @@ router.post("/stats", (req, res) => {
 			if (!doc) {
 				// Domain doesn't exist
 				res.status(200).json({
-					reports: 0,
+					domainReports: 0,
 					pathReports: 0,
 					message: "No reports on this domain",
 				});
 			} else {
 				// We have the doc, return the number of reports on domain
 				res.status(200).json({
-					reports: doc.reports,
-					pathReports: doc.pathReports,
+					domainReports: doc.reports,
+					pathReports: doc.getPathReport(path).length,
 					message: "Domain stats",
 				});
 			}
@@ -60,7 +60,7 @@ router.post("/report", (req, res) => {
 					else {
 						res.status(201).json({
 							domainReports: createdDoc.reports,
-							pathReports: createdDoc.pathReports.length,
+							pathReports: createdDoc.getPathReport(path).length,
 							message: "Created a document for domain",
 						});
 					}
