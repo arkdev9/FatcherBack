@@ -20,9 +20,11 @@ router.post("/stats", (req, res) => {
 				});
 			} else {
 				// We have the doc, return the number of reports on domain
+				// If no page reports, send 0
+				let pageReport = doc.getPathReport(path);
 				res.status(200).json({
 					domainReports: doc.reports,
-					pathReports: doc.getPathReport(path).reports,
+					pathReports: pageReport ? pageReport.reports : 0,
 					message: "Domain stats",
 				});
 			}
