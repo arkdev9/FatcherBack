@@ -3,10 +3,11 @@ const express = require("express");
 const Domain = require("../models/Domain");
 const router = express.Router();
 
-// Endpoint for getting domain stats
+// Endpoint for getting stats
 router.post("/stats", (req, res) => {
 	const reqUrl = url.parse(req.body.url);
 	const domain = reqUrl.hostname;
+	const path = reqUrl.pathname;
 
 	Domain.findById(domain)
 		.then((doc) => {
