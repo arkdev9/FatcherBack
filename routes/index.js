@@ -24,7 +24,7 @@ router.post("/stats", (req, res) => {
 				let pageReport = doc.getPathReport(path);
 				res.status(200).json({
 					domainReports: doc.reports,
-					pathReports: pageReport ? pageReport.reports : 0,
+					pathReports: pageReport ? pageReport.users.length : 0,
 					message: "Domain stats",
 				});
 			}
@@ -38,6 +38,7 @@ router.post("/stats", (req, res) => {
 
 // Endpoint for reporting
 router.post("/report", (req, res) => {
+	const user = req.body.user;
 	const reqUrl = url.parse(req.body.url);
 	const domain = reqUrl.hostname;
 	const path = reqUrl.pathname;
@@ -63,21 +64,20 @@ router.post("/report", (req, res) => {
 					else {
 						res.status(201).json({
 							domainReports: createdDoc.reports,
-							pathReports: createdDoc.getPathReport(path).reports,
+							pathReports: createdDoc.getPathReport(path).users.length,
 							message: "Created a document for domain",
 						});
 					}
 				});
 			} else {
 				// Found the document, increment domain reports
-				doc.reports += 1;
-				doc.incrementPathReport(path);
+				doc.incrementPathReport(path, user);
 				doc.save((err, updatedDoc) => {
 					if (err) res.status(500).json({ err });
 					else {
 						res.status(200).json({
 							domainReports: updatedDoc.reports,
-							pathReports: updatedDoc.getPathReport(path).reports,
+							pathReports: updatedDoc.getPathReport(path).users.length,
 							message: "Updated domain report",
 						});
 					}
