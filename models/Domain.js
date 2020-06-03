@@ -41,7 +41,7 @@ DomainSchema.methods.incrementPathReport = function (path, user) {
 		}
 	}
 	// We didn't find any path report for that path :(
-	this.pathReports.push({ path: path, reports: [user] });
+	this.pathReports.push({ path: path, users: [user] });
 };
 
 DomainSchema.methods.getPathReport = function (path) {

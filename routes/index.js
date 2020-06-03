@@ -50,14 +50,12 @@ router.post("/report", (req, res) => {
 				// Doc doesn't exist, create one for this domain
 				let newDoc = new Domain({
 					_id: domain,
-					reports: 1,
-					pathReports: [
-						{
-							path: path,
-							reports: 1,
-						},
-					],
+					reports: 0,
+					pathReports: [],
 				});
+
+				newDoc.reports = 1;
+				newDoc.pathReports = [{ path: path, users: [user] }];
 
 				newDoc.save((err, createdDoc) => {
 					if (err) res.status(500).json({ err });
